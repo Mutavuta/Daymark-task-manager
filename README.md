@@ -33,10 +33,9 @@ Install [Node.js](https://nodejs.org/) and npm. The project uses Vite to run the
 
 ### 1. Clone the repository
 
-Replace `YOUR-USERNAME` with the GitHub account that owns the repository.
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/daymark-student-task-manager.git
+git clone https://github.com/Mutavuta/daymark-student-task-manager.git
 cd daymark-student-task-manager
 ```
 
