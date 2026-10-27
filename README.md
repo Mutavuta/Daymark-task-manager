@@ -35,8 +35,8 @@ Install [Node.js](https://nodejs.org/) and npm. The project uses Vite to run the
 
 
 ```bash
-git clone https://github.com/Mutavuta/daymark-student-task-manager.git
-cd daymark-student-task-manager
+git clone https://github.com/Mutavuta/Daymark-task-manager.git
+cd daymark-task-manager
 ```
 
 ### 2. Install dependencies
@@ -68,7 +68,7 @@ npm run preview
 ## Project Structure
 
 ```text
-daymark-student-task-manager/
+daymark-task-manager/
 ├── index.html          # Dashboard structure and form
 ├── style.css           # Tailwind CSS entry point and dark-mode variant
 ├── script.js           # Task logic, filters, statistics, and theme toggle
