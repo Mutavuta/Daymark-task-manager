@@ -1,136 +1,145 @@
-const STORAGE_KEY = "task-manager-tasks";
+// 1. Get the HTML elements we need
+const taskForm = document.getElementById("taskForm");
+const taskInput = document.getElementById("taskInput");
+const taskList = document.getElementById("taskList");
 
-const taskForm = document.getElementById("task-form");
-const taskInput = document.getElementById("task-input");
-const taskList = document.getElementById("task-list");
-const emptyMessage = document.getElementById("empty-message");
+// 2. Load saved tasks from the browser
+const STORAGE_KEY = "daymark-tasks";
 
-// reads saved tasks from localStorage and returns them as an array
-function loadTasks() {
-    // getItem returns a string or null if nothing exists has been saved yet
-    const saved = localStorage.getItem(STORAGE_KEY);
+let tasks = [];
 
-    // first visit - nothing is saved so start with an empty array
-    if (saved === null) {
-        return [];
+try {
+    const savedTasks = localStorage.getItem(STORAGE_KEY);
+    tasks = savedTasks ? JSON.parse(savedTasks) : [];
+
+    if (!Array.isArray(tasks)) {
+        tasks = [];
     }
-
-    return JSON.parse(saved);
+} catch {
+    tasks = [];
 }
 
-// saves new talks to localStorage as a JSON string
-function saveTasks(tasks) {
+// 3. Save tasks to localStorage
+function saveTasks() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
 }
 
-// the single source of truth: the page gets drawn from this array
-// let not const because it's going to be reassigned when we load tasks from localStorage or delete a task
-let tasks = loadTasks();
+// 4. Display the tasks on the page
+function renderTasks() {
+    taskList.replaceChildren();
 
-// creates a new task object and adds it to the tasks array
-function addTask(text) {
-    // remove spaces from both ends 
-    const cleanText = text.trim();
+    if (tasks.length === 0) {
+        const emptyMessage = document.createElement("li");
 
-    // don't add empty tasks
-    if (cleanText === "") {
+        emptyMessage.className =
+            "rounded-xl border border-dashed border-stone-300 px-4 py-8 text-center text-sm text-stone-500";
+
+        emptyMessage.textContent =
+            "No tasks yet. Add your first task above.";
+
+        taskList.appendChild(emptyMessage);
         return;
     }
 
-    // build the task object; Date.now() gives a unique id
-    const newTask = {
-        id:Date.now(),
-        text: cleanText,
-        completed: false, // every new task starts out as not completed
-    };
-
-    // add it to the array, save, then redraw the page
-    tasks.push(newTask);
-    saveTasks(tasks);
-    renderTasks();
-}
-
-// flips a task between done and not done
-function toggleTask(id) {
-    const task = tasks.find(function (t) {
-        return t.id === id;
-    });
-
-    // flip the value: true becomes false, false becomes true
-    task.completed = !task.completed;
-
-    saveTasks(tasks);
-    renderTasks();
-}
-
-// removes a task from the list
-function deleteTask(id) {
-    // filter builds a new array with only the tasks whose id doesn't match 
-    tasks = tasks.filter(function (t) {
-        return t.id !== id;
-    });
-    
-    saveTasks(tasks);
-    renderTasks();
-}
-
-// draws the whole task list on the page from the tasks array
-function renderTasks() {
-    // wipe the list first so we don't duplicate tasks
-    taskList.innerHTML = "";
-
-    //build one <li> for every task
     tasks.forEach(function (task) {
-        const li = document.createElement("li");
-        li.className = "task-item";
+        const listItem = document.createElement("li");
 
-        // if completed tasks get an extra class so CSS can style them differently
-        if (task.completed) {
-            li.classList.add("completed");
-        }
+        listItem.className =
+            "flex items-center justify-between gap-4 rounded-xl border border-stone-200 bg-white px-4 py-4 shadow-sm";
 
-        // checkbox reflects and controls the completed state
+        const leftSide = document.createElement("div");
+
+        leftSide.className = "flex min-w-0 items-center gap-3";
+
         const checkbox = document.createElement("input");
+
         checkbox.type = "checkbox";
         checkbox.checked = task.completed;
+        checkbox.className = "h-4 w-4 shrink-0 cursor-pointer accent-lime-600";
+        checkbox.setAttribute("aria-label", "Mark task as completed");
+
         checkbox.addEventListener("change", function () {
             toggleTask(task.id);
         });
 
-        // the text of the task
-        const text = document.createElement("span");
-        text.textContent = task.text;
+        const taskText = document.createElement("span");
 
-        // delete button
-        const deleteBtn = document.createElement("button");
-        deleteBtn.textContent = "Delete";
-        deleteBtn.addEventListener("click", function () {
+        taskText.textContent = task.text;
+
+        taskText.className = task.completed
+            ? "break-words text-stone-400 line-through"
+            : "break-words text-stone-800";
+
+        leftSide.append(checkbox, taskText);
+
+        const deleteButton = document.createElement("button");
+
+        deleteButton.type = "button";
+        deleteButton.textContent = "Delete";
+
+        deleteButton.className =
+            "shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50";
+
+        deleteButton.addEventListener("click", function () {
             deleteTask(task.id);
         });
 
-        // put the pieces together
-        li.appendChild(checkbox);
-        li.appendChild(text);
-        li.appendChild(deleteBtn);
-        taskList.appendChild(li);
+        listItem.append(leftSide, deleteButton);
+        taskList.appendChild(listItem);
     });
-    
-    // shows the empty message only when there are not tasks
-    emptyMessage.style.display = tasks.length === 0 ? "block" : "none";
 }
 
-// runs when the form is submitted (user presses enter or clicks the submit button)
+// 5. Add a new task
 taskForm.addEventListener("submit", function (event) {
-    // stops the browser's default behavoiur of reloading the page on submit
     event.preventDefault();
 
-    addTask(taskInput.value);
+    const taskText = taskInput.value.trim();
 
-    // clear the box and put the cursor back in it
+    if (taskText === "") {
+        return;
+    }
+
+    const newTask = {
+        id: crypto.randomUUID(),
+        text: taskText,
+        completed: false
+    };
+
+    tasks.unshift(newTask);
+
+    saveTasks();
+    renderTasks();
+
     taskInput.value = "";
     taskInput.focus();
 });
 
-// initial render when the page loads
-renderTasks();
+// 6. Mark a task as completed or incomplete
+function toggleTask(taskId) {
+    tasks = tasks.map(function (task) {
+        if (task.id === taskId) {
+            return {
+                ...task,
+                completed: !task.completed
+            };
+        }
 
+        return task;
+    });
+
+    saveTasks();
+    renderTasks();
+}
+
+// 7. Delete a task
+function deleteTask(taskId) {
+    tasks = tasks.filter(function (task) {
+        return task.id !== taskId;
+    });
+
+    saveTasks();
+    renderTasks();
+}
+
+// 8. Display saved tasks when the page opens
+renderTasks();
