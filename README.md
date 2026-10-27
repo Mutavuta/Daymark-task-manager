@@ -104,6 +104,3 @@ Daymark currently uses the browser's `localStorage` for tasks and the chosen the
 - Keep `package.json` and `package-lock.json` in version control so others can install the project dependencies.
 - This project is a front-end application. Task data is stored locally in the browser and is not sent to a server.
 
-## License
-
-No license has been added yet. Unless a license is added to the repository, others should not assume they have permission to reuse or redistribute the code.
